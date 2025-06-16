@@ -1,0 +1,50 @@
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContexts'
+
+const JoinALeague = () => {
+  const { isAuthenticated, user, login, logout } = useAuth();
+  const navigate = useNavigate()
+
+  const [code, setCode] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    console.log('fetching response')
+    const response = await fetch("http://localhost:5000/api/member", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, user }),
+    });
+    console.log('checking for data')
+    const data = await response.json();
+    if (data.success) {
+      console.log('Club Joined!')
+    }
+    else {
+      console.log('data failed to fetch')
+    }
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input 
+          placeholder="Enter League Code" 
+          value={code}
+          onChange={(e) => setCode(e.target.value)} 
+        />
+        <button type="submit">Submit Code</button>
+      </form>
+      <br></br>
+      <br></br>
+      OR
+      <br></br>
+      <br></br>
+      <button onClick={() => navigate("/createLeague")}>Create a League</button>
+    </div>
+  )
+}
+
+export default JoinALeague
