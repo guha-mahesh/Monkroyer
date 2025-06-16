@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContexts';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
 
 const CreateLeague = () => {
   interface Data {
     code: string;
     success: boolean;
+    id: string;
   }
 
   const { isAuthenticated, user } = useAuth();
@@ -22,10 +25,20 @@ const CreateLeague = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const createdBy = user;
+    const token = localStorage.getItem('authToken')
+
+
+    if (!token) {
+
+  console.error('No token found');
+  navigate("/login")
+  return;
+    }
+
 
     const response = await fetch("http://localhost:5000/api/league", {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json',  'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ createdBy, leagueName }),
     });
 
@@ -38,7 +51,8 @@ const CreateLeague = () => {
   return (
     <div>
       {data && data.success ? (
-        <div>Success! Your league code is {data.code}</div>
+        <div>Success! Your league code is {data.code}<Link to={`/leagues/${data.id}`}>Go To League</Link>
+        </div>
       ) : (
         <form onSubmit={handleSubmit}>
           <section>
@@ -53,6 +67,7 @@ const CreateLeague = () => {
             />
           </section>
           <button type="submit">Create League</button>
+          
         </form>
       )}
     </div>

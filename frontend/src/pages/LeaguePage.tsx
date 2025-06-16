@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 
 
+
 const LeaguePage = () => {
 
     interface Data {
@@ -16,10 +17,11 @@ const LeaguePage = () => {
     
     useEffect(() =>{
     const fetchLeague = async () => {
+    const token = localStorage.getItem('authToken')
      
     const response = await fetch(`http://localhost:5000/api/league/${leagueId}`, {
     method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json','Authorization': `Bearer ${token}` },
     });
 
     const data = await response.json();

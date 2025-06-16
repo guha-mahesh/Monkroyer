@@ -1,12 +1,11 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { ResultSetHeader } from 'mysql2';
 import { RowDataPacket } from 'mysql2';
 import { pool } from '../server';
 import jwt from 'jsonwebtoken';
-
+import verifyToken, { AuthRequest } from '../middleware/auth';
 
 const router = Router();
-
 
 const generateCode = (length: number = 8): string => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -17,25 +16,24 @@ const generateCode = (length: number = 8): string => {
     return result;
 };
 
-async function createLeague(req: Request, res: Response) {
-    const { leagueName, createdBy } = req.body;
+async function createLeague(req: AuthRequest, res: Response) {
+    const { leagueName } = req.body;
+    const userId = req.user?.userId;
 
+    if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+    }
 
-    console.log('Received:', { leagueName, createdBy });
+    console.log('Received:', { leagueName, userId });
 
     const code = generateCode()
     try {
         const [result] = await pool.execute<ResultSetHeader>(
             'INSERT INTO league (leagueName, createdBy, code) VALUES (?, ?, ?)',
-            [leagueName, createdBy, code]
+            [leagueName, userId, code]
         )
         if (result) {
             const leagueId = result.insertId;
-
-
-
-
-            const userId = createdBy.id;
 
             await pool.execute(
                 'INSERT INTO league_members (users_id, league_id) VALUES (?, ?)',
@@ -44,67 +42,59 @@ async function createLeague(req: Request, res: Response) {
 
             console.log("League created and creator added as member");
 
-
             console.log("Success")
+            res.json({
+                success: true,
+                code: code,
+                id: leagueId
+            });
         }
-        res.json({
-            success: true,
-            code: code
-        });
-
 
     } catch (error) {
-
         console.error('Database error:', error);
         res.status(500).json({
             error: 'Failed to create League',
             details: error instanceof Error ? error.message : 'Unknown error'
         });
     }
-
-
 }
-async function joinLeague(req: Request, res: Response) {
-    const { code, user } = req.body;
 
-    console.log('Received:', { code, user });
+async function joinLeague(req: AuthRequest, res: Response) {
+    const { code } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    console.log('Received:', { code, userId });
 
     try {
         const [leagueResult] = await pool.execute<RowDataPacket[]>(
             'SELECT * FROM league WHERE code = (?)',
             [code]
         )
-        if (leagueResult) {
-            const userResult = user.id
-            if (userResult) {
-                console.log(userResult)
-                const leagueId = leagueResult[0].league_id;
-                const [result] = await pool.execute<ResultSetHeader>(
-                    'INSERT INTO league_members (users_id, league_id) VALUES (?, ?)',
-                    [userResult, leagueId]
-                )
+        if (leagueResult.length > 0) {
+            const leagueId = leagueResult[0].league_id;
+            const [result] = await pool.execute<ResultSetHeader>(
+                'INSERT INTO league_members (users_id, league_id) VALUES (?, ?)',
+                [userId, leagueId]
+            )
 
-                if (result) {
-                    console.log('Success, club joined')
-                    res.json({
-                        success: true,
-                        league_id: leagueId
-                    });
-
-                }
-
+            if (result) {
+                console.log('Success, club joined')
+                res.json({
+                    success: true,
+                    league_id: leagueId
+                });
             }
-
-        }
-        else {
+        } else {
             res.status(400).json({
                 error: 'Invalid Code',
             })
         }
 
-
     } catch (error) {
-
         console.error('Database error:', error);
         res.status(500).json({
             error: 'Failed to Join League',
@@ -114,9 +104,6 @@ async function joinLeague(req: Request, res: Response) {
 }
 
 async function getUserByID(id: string) {
-
-
-
     const [member] = await pool.execute<RowDataPacket[]>(
         'SELECT username FROM users WHERE users_id = (?)',
         [id]
@@ -124,15 +111,10 @@ async function getUserByID(id: string) {
     if (member) {
         console.log("Found Member")
         return member[0].username;
-
-
     }
-
-
 }
 
-
-async function getLeague(req: Request, res: Response) {
+async function getLeague(req: AuthRequest, res: Response) {
     const { leagueID } = req.params;
     console.log('Received:', { leagueID });
     const [league] = await pool.execute<RowDataPacket[]>(
@@ -144,7 +126,6 @@ async function getLeague(req: Request, res: Response) {
         [leagueID]
     );
     if (league && members) {
-
         console.log("League Found")
         console.log(`Found ${members.length} members in league ${leagueID}`);
         const usersList: any[] = [];
@@ -158,13 +139,10 @@ async function getLeague(req: Request, res: Response) {
             members: usersList
         });
     }
-
-
 }
 
-
-router.post('/league', createLeague);
-router.post('/member', joinLeague);
-router.get('/league/:leagueID', getLeague)
+router.post('/league', verifyToken, createLeague);
+router.post('/member', verifyToken, joinLeague);
+router.get('/league/:leagueID', verifyToken, getLeague);
 
 export default router;

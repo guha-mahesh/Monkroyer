@@ -12,9 +12,11 @@ const JoinALeague = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     console.log('fetching response')
+    const createdBy = user;
+    const token = localStorage.getItem('authToken')
     const response = await fetch("http://localhost:5000/api/member", {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json','Authorization': `Bearer ${token}`},
       body: JSON.stringify({ code, user }),
     });
     console.log('checking for data')
