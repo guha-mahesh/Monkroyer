@@ -1,4 +1,4 @@
-// routes/users.ts
+
 import { Router, Request, Response } from 'express';
 import { ResultSetHeader } from 'mysql2';
 import { RowDataPacket } from 'mysql2';

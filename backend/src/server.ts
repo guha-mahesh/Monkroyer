@@ -3,6 +3,8 @@ import cors from 'cors';
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 import userRoutes from './users/users';
+import bingoRoutes from './bingo/bingo'
+import leagueRoutes from './league/league'
 
 
 dotenv.config();
@@ -17,6 +19,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', userRoutes);
+app.use('/api', bingoRoutes)
+app.use('/api', leagueRoutes)
 
 export const pool = mysql.createPool({
     host: process.env.DB_HOST || 'mysql',
