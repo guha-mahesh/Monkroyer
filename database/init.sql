@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    points INT DEFAULT 0,
+    clubsJoined TINYINT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS league (
@@ -27,4 +29,15 @@ CREATE TABLE IF NOT EXISTS league_members (
     league_id INT,
     FOREIGN KEY (users_id) REFERENCES users(users_id),
     FOREIGN KEY (league_id) REFERENCES league(league_id)
+);
+
+CREATE TABLE IF NOT EXISTS bingoItems (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content VARCHAR(255),
+    users_id INT,
+    count TINYINT DEFAULT 0,
+    score INT,
+    happened BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (users_id) REFERENCES users(users_id)
+
 );

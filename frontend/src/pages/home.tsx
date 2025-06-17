@@ -20,6 +20,10 @@ return (
         <button onClick={logout}>Log Out</button>
         <button onClick={() => navigate("/enterItem")}>Enter Item</button>
         <button onClick = {() => navigate("/joinLeague")}>Join a League</button>
+        <br></br>
+        <br></br>
+        <br></br>
+        <button onClick = {() => navigate("/myLeagues")}>My Leagues</button>
       </>
     )}
   </>

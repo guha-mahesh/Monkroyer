@@ -11,16 +11,19 @@ const CreateLeague = () => {
     id: string;
   }
 
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
   const [data, setData] = useState<Data | null>(null);
   const [leagueName, setLeagueName] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/");
-    }
-  }, [isAuthenticated, navigate]);
+ useEffect(() => {
+             if (!isAuthenticated && !loading) {
+               navigate("/login")
+               
+             }
+             
+            
+           }, [isAuthenticated, navigate, loading]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,12 +49,16 @@ const CreateLeague = () => {
     if (json.success) {
       setData(json);
     }
+    else{
+      console.log(json.error)
+    }
   };
 
   return (
     <div>
       {data && data.success ? (
         <div>Success! Your league code is {data.code}<Link to={`/leagues/${data.id}`}>Go To League</Link>
+        <button onClick = {() => navigate("/")}>Go Home</button>
         </div>
       ) : (
         <form onSubmit={handleSubmit}>
@@ -67,6 +74,8 @@ const CreateLeague = () => {
             />
           </section>
           <button type="submit">Create League</button>
+          <button onClick = {() => navigate("/")}>Go Home</button>
+          <button onClick = {() => navigate("/joinLeague")}>Join a League</button>
           
         </form>
       )}

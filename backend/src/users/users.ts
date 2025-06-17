@@ -4,7 +4,9 @@ import { ResultSetHeader } from 'mysql2';
 import { RowDataPacket } from 'mysql2';
 import { pool } from '../server';
 import { hashPassword, verifyPassword } from './hash'
+import verifyToken from '../middleware/auth';
 import jwt from 'jsonwebtoken';
+
 
 
 
@@ -90,7 +92,7 @@ async function Login(req: Request, res: Response) {
             if (verification) {
                 const token = jwt.sign(
                     {
-                        userId: user_data.id,
+                        userId: user_data.users_id,
                         username: user_data.username
                     },
                     process.env.JWT_SECRET || 'your-secret-key',
@@ -100,7 +102,7 @@ async function Login(req: Request, res: Response) {
                     success: true,
                     token: token,
                     user: {
-                        id: user_data.id,
+                        id: user_data.users_id,
                         username: user_data.username
 
                     }
@@ -120,9 +122,80 @@ async function Login(req: Request, res: Response) {
 
 }
 
+async function points(req: Request, res: Response) {
+    const userId = req.params.userId;
+    const league_id = req.params.league_id;
+    console.log('Received:', { userId, league_id });
+
+    if (userId) {
+        try {
+            const [rows] = await pool.execute<RowDataPacket[]>('SELECT points FROM users WHERE users_id = (?)', [userId]);
+            const points = rows[0].points;
+
+            res.json({
+                success: true,
+                points: points,
+
+
+            })
+        }
+        catch (err) {
+            console.error('Error in fetching points for user', userId, "  :", err);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching points'
+            });
+
+        }
+
+
+    }
+    else if (league_id) {
+
+        try {
+            const [members] = await pool.execute<RowDataPacket[]>(
+                'SELECT users_id FROM league_members WHERE league_id = (?)',
+                [league_id]
+            );
+            const userData: RowDataPacket[] = [];
+            for (const member of members) {
+                const [userInfo] = await pool.execute<RowDataPacket[]>(
+                    'SELECT username, points FROM users WHERE users_id = (?)',
+                    [member.users_id]
+                );
+                userData.push(userInfo[0]);
+            }
+            res.json({
+                success: true,
+                userData: userData
+            })
+        }
+        catch (err) {
+            console.error('Error in fetching points for users', err);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching points'
+            });
+
+
+        }
+
+
+
+
+    }
+
+
+}
+
+
+
+
+
 
 router.post('/users', createUser);
 router.post('/login', Login)
+router.get('/points/:league_id/:userId?', verifyToken, points)
 //router.get('/users/:id', getUser);  
 //router.put('/users/:id', updateUser);
 //router.delete('/users/:id', deleteUser);

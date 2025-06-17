@@ -1,15 +1,27 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContexts'
 
+
 const JoinALeague = () => {
-  const { isAuthenticated, user, login, logout } = useAuth();
+  const { isAuthenticated, user, login, logout, loading } = useAuth();
   const navigate = useNavigate()
+  useEffect(() => {
+              if (!isAuthenticated && !loading) {
+                navigate("/login")
+                
+              }
+              
+             
+            }, [isAuthenticated, navigate, loading]);
 
   const [code, setCode] = useState("")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+
+
+      
     e.preventDefault()
     console.log('fetching response')
     const createdBy = user;
@@ -25,7 +37,7 @@ const JoinALeague = () => {
       console.log('Club Joined!')
     }
     else {
-      console.log('data failed to fetch')
+      console.log(data.error)
     }
   }
 
@@ -45,6 +57,7 @@ const JoinALeague = () => {
       <br></br>
       <br></br>
       <button onClick={() => navigate("/createLeague")}>Create a League</button>
+      <button onClick = {() => navigate("/")}>Go Home</button>
     </div>
   )
 }

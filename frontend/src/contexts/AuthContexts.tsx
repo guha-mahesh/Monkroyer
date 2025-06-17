@@ -42,10 +42,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+
   useEffect(() => {
     
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('user');
+
+
     
     if (token && userData) {
       setIsAuthenticated(true);
